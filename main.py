@@ -588,40 +588,39 @@ def refine_candidate_bayesian(args_dict):
             
             # 최종 순위를 딕셔너리에 추가
             preset['rank'] = rank + 1
-
     return final_presets
+
+PARAM_RANGES = {
+    "Distortion": {"drive_db": {"lo": 0, "hi": 15, "res": 0.1, "scale": "linear"}},
+    "EQ": {
+        "mode": {"choices": ["pass-pass", "pass-shelf", "shelf-pass", "shelf-shelf"], "type": "categorical"},
+        "low_cut": {"lo": 50, "hi": 500, "res": 10, "scale": "log"},
+        "high_cut": {"lo": 8000, "hi": 16000, "res": 100, "scale": "log"},
+        "q": {"lo": 0.1, "hi": 10.0, "res": 0.1, "scale": "linear"},
+        "gains.low_shelf": {"lo": -20.0, "hi": 20.0, "res": 0.2, "scale": "linear"},
+        "gains.high_shelf": {"lo": -20.0, "hi": 20.0, "res": 0.2, "scale": "linear"},
+        "gains.peak1": {"lo": -20.0, "hi": 20.0, "res": 0.2, "scale": "linear"},
+        "gains.peak2": {"lo": -20.0, "hi": 20.0, "res": 0.2, "scale": "linear"},
+        "gains.peak3": {"lo": -20.0, "hi": 20.0, "res": 0.2, "scale": "linear"},
+        "peak1_freq": {"lo": 100.0, "hi": 500.0, "res": 10.0, "scale": "log"},
+        "peak2_freq": {"lo": 500.0, "hi": 4000.0, "res": 100.0, "scale": "log"},
+        "peak3_freq": {"lo": 4000.0, "hi": 12000.0, "res": 1000.0, "scale": "log"}
+    },
+    "Reverb": {
+        "room_size": {"lo": 0.0, "hi": 1.0, "res": 0.05, "scale": "linear"},
+        "damping": {"lo": 0.0, "hi": 1.0, "res": 0.05, "scale": "linear"},
+        "wet_level": {"lo": 0.00, "hi": 1.0, "res": 0.01, "scale": "linear"},
+    },
+    "Delay": {"delay": {"lo": 0.0, "hi": 0.05, "res": 0.01, "scale": "linear"}},
+    "PitchShift": {"semitones": {"lo": -12, "hi": 12, "res": 1, "scale": "linear"}},
+    "Bitcrush": {"bit_depth": {"lo": 0, "hi": 16, "res": 1, "scale": "linear"}},
+}
 
 # ==============================================================================
 # Main Logic
 # ==============================================================================
 def main():
     from datetime import datetime
-
-    PARAM_RANGES = {
-        "Distortion": {"drive_db": {"lo": 0, "hi": 15, "res": 0.1, "scale": "linear"}},
-        "EQ": {
-            "mode": {"choices": ["pass-pass", "pass-shelf", "shelf-pass", "shelf-shelf"], "type": "categorical"},
-            "low_cut": {"lo": 50, "hi": 500, "res": 10, "scale": "log"},
-            "high_cut": {"lo": 8000, "hi": 16000, "res": 100, "scale": "log"},
-            "q": {"lo": 0.1, "hi": 10.0, "res": 0.1, "scale": "linear"},
-            "gains.low_shelf": {"lo": -20.0, "hi": 20.0, "res": 0.2, "scale": "linear"},
-            "gains.high_shelf": {"lo": -20.0, "hi": 20.0, "res": 0.2, "scale": "linear"},
-            "gains.peak1": {"lo": -20.0, "hi": 20.0, "res": 0.2, "scale": "linear"},
-            "gains.peak2": {"lo": -20.0, "hi": 20.0, "res": 0.2, "scale": "linear"},
-            "gains.peak3": {"lo": -20.0, "hi": 20.0, "res": 0.2, "scale": "linear"},
-            "peak1_freq": {"lo": 100.0, "hi": 500.0, "res": 10.0, "scale": "log"},
-            "peak2_freq": {"lo": 500.0, "hi": 4000.0, "res": 100.0, "scale": "log"},
-            "peak3_freq": {"lo": 4000.0, "hi": 12000.0, "res": 1000.0, "scale": "log"}
-        },
-        "Reverb": {
-            "room_size": {"lo": 0.0, "hi": 1.0, "res": 0.05, "scale": "linear"},
-            "damping": {"lo": 0.0, "hi": 1.0, "res": 0.05, "scale": "linear"},
-            "wet_level": {"lo": 0.00, "hi": 1.0, "res": 0.01, "scale": "linear"},
-        },
-        "Delay": {"delay": {"lo": 0.0, "hi": 0.05, "res": 0.01, "scale": "linear"}},
-        "PitchShift": {"semitones": {"lo": -12, "hi": 12, "res": 1, "scale": "linear"}},
-        "Bitcrush": {"bit_depth": {"lo": 0, "hi": 16, "res": 1, "scale": "linear"}},
-    }
     
     ap = argparse.ArgumentParser()
     ap.add_argument("--audio", required=True)
