@@ -23,8 +23,8 @@ Follow these steps to set up and run the project.
 First, clone this repository to your local machine using Git.
 
 ```bash
-git clone https://your_repository_url_here.git
-cd your_repository_directory_name
+git clone https://github.com/HojoonKi/FxSearcher.git
+cd FxSearcher
 ```
 
 ### 2\. Create Environment & Install Dependencies
