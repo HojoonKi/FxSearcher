@@ -1,0 +1,46 @@
+# Python Bytecode and Caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environments
+venv/
+.env/
+env/
+venv.bak/
+
+# Package Metadata
+*.egg-info/
+
+# Build and Distribution
+build/
+dist/
+wheels/
+*.tar.gz
+*.whl
+
+# OS and Editor specific
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Sensitive Information - DO NOT COMMIT THESE
+.env
+secrets.*
+config.ini
+*.pem
+*.key
+
+# Logs and Temporary Files
+*.log
+*.tmp
+*.swp
+
+# unused for reproduce
+prompt.txt
+evaluate.py
+outputs/*
+audio_dataset/*
+benchmark/*
