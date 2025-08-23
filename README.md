@@ -1,7 +1,3 @@
-Of course. Here is the updated `README.md` with a "Getting Started" section that includes instructions to `git clone` the repository.
-
------
-
 # Automatic Audio FX Chain Generation using CLAP
 
 This project provides a Python script that automatically discovers and tunes a chain of audio effects to make a source audio file match a given text prompt. It leverages the Contrastive Language-Audio Pre-training (CLAP) model for semantic understanding and uses Bayesian Optimization for intelligent, efficient parameter searching.
