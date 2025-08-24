@@ -41,6 +41,7 @@ config.ini
 # unused for reproduce
 prompt.txt
 prompt_human.txt
+prompt_experiment.txt
 evaluate.py
 outputs/*
 audio_dataset/*
