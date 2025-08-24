@@ -131,3 +131,9 @@ The script will create the specified output directory (`--outdir`), which will c
   - **`best.wav`**: The single best audio result, ranked by the benchmark (positive prompt) CLAP score.
   - **`rank_2.wav`**, **`rank_3.wav`**, etc.: Other high-scoring candidates from the search, also ranked by their benchmark score.
   - **`results.json`**: A detailed JSON file containing the full presets for each of the top N results, including their final parameters, composite scores, and benchmark CLAP scores.
+
+-----
+
+## Acknowledgements
+
+Audio effect processing in this project is powered by [Spotify's Pedalboard](https://github.com/spotify/pedalboard/tree/master?tab=readme-ov-file).

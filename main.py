@@ -44,7 +44,7 @@ from transformers import ClapProcessor, ClapModel
 # -------------------------------
 # Utility
 # -------------------------------
-def load_audio_mono(path: str, target_sr: int = 48000):
+def load_audio_mono(path: str, target_sr: int = 48000, max_duration: float = 10.0):
     # 1. librosa를 사용해 오디오를 로드합니다. sr은 파일의 원본 샘플레이트입니다.
     # mono=True 옵션으로 바로 모노 채널로 변환합니다.
     audio, sr = librosa.load(path, sr=None, mono=True)
@@ -53,8 +53,13 @@ def load_audio_mono(path: str, target_sr: int = 48000):
     if sr != target_sr:
         audio = librosa.resample(y=audio, orig_sr=sr, target_sr=target_sr)
         sr = target_sr
+
+    # 3. 10초가 넘으면 앞에서 10초만 남깁니다.
+    max_samples = int(max_duration * sr)
+    if audio.shape[-1] > max_samples:
+        audio = audio[:max_samples]
         
-    # 3. pedalboard가 요구하는 형태로 차원을 맞춰줍니다. (1, num_samples)
+    # 4. pedalboard가 요구하는 형태로 차원을 맞춰줍니다. (1, num_samples)
     audio = audio[np.newaxis, :]
     
     return audio.astype(np.float32), sr

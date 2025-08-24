@@ -40,7 +40,9 @@ config.ini
 
 # unused for reproduce
 prompt.txt
+prompt_human.txt
 evaluate.py
 outputs/*
 audio_dataset/*
 benchmark/*
+human/*
