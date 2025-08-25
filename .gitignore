@@ -42,8 +42,11 @@ config.ini
 prompt.txt
 prompt_human.txt
 prompt_experiment.txt
+prompt_more.txt
 evaluate.py
 outputs/*
 audio_dataset/*
 benchmark/*
 human/*
+human_more/*
+summary_results_top50.json
