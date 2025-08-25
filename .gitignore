@@ -41,7 +41,6 @@ config.ini
 # unused for reproduce
 prompt.txt
 prompt_human.txt
-prompt_experiment.txt
 prompt_more.txt
 evaluate.py
 outputs/*
