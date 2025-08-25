@@ -45,21 +45,16 @@ from transformers import ClapProcessor, ClapModel
 # Utility
 # -------------------------------
 def load_audio_mono(path: str, target_sr: int = 48000, max_duration: float = 10.0):
-    # 1. librosa를 사용해 오디오를 로드합니다. sr은 파일의 원본 샘플레이트입니다.
-    # mono=True 옵션으로 바로 모노 채널로 변환합니다.
     audio, sr = librosa.load(path, sr=None, mono=True)
     
-    # 2. 샘플레이트가 다를 경우, librosa의 리샘플링 기능을 사용합니다.
     if sr != target_sr:
         audio = librosa.resample(y=audio, orig_sr=sr, target_sr=target_sr)
         sr = target_sr
 
-    # 3. 10초가 넘으면 앞에서 10초만 남깁니다.
     max_samples = int(max_duration * sr)
     if audio.shape[-1] > max_samples:
         audio = audio[:max_samples]
         
-    # 4. pedalboard가 요구하는 형태로 차원을 맞춰줍니다. (1, num_samples)
     audio = audio[np.newaxis, :]
     
     return audio.astype(np.float32), sr
@@ -112,11 +107,9 @@ def clap_score_batch(audio_list: list[np.ndarray], sr: int, prompt: str, model, 
     inputs = {k: v.to(device) for k, v in inputs.items()}
     
     with torch.no_grad():
-        # 1. 텍스트와 오디오 임베딩을 각각 추출
         text_features = model.get_text_features(inputs['input_ids'], attention_mask=inputs['attention_mask'])
         audio_features = model.get_audio_features(input_features=inputs['input_features'])
 
-        # 2. L2 정규화
         text_features = torch.nn.functional.normalize(text_features, p=2, dim=-1)
         audio_features = torch.nn.functional.normalize(audio_features, p=2, dim=-1)
 
@@ -132,8 +125,7 @@ def clap_score_batch_negative(audio_list: list[np.ndarray], sr: int, prompts: st
     and a list of prompts corresponding to each audio clip.
     """
     wavs = [a.squeeze().astype(np.float32) for a in audio_list]
-    
-    # prompts가 단일 문자열일 경우, 오디오 개수만큼 복제하여 리스트로 만듭니다.
+
     if isinstance(prompts, str):
         prompts = [prompts] * len(wavs)
         
@@ -147,12 +139,7 @@ def clap_score_batch_negative(audio_list: list[np.ndarray], sr: int, prompts: st
         text_features = torch.nn.functional.normalize(text_features, p=2, dim=-1)
         audio_features = torch.nn.functional.normalize(audio_features, p=2, dim=-1)
 
-        # ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ 이 부분이 핵심 수정사항 ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-        # 각 오디오와 그에 해당하는 텍스트의 유사도를 직접 계산 (element-wise dot product)
-        # (audio_features * text_features)는 각 원소별 곱셈
-        # .sum(dim=1)은 각 임베딩 벡터의 내적을 계산
         scores_tensor = (audio_features * text_features).sum(dim=1)
-        # ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ 이 부분이 핵심 수정사항 ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         
         scores = scores_tensor.cpu().numpy().tolist()
         
@@ -160,6 +147,7 @@ def clap_score_batch_negative(audio_list: list[np.ndarray], sr: int, prompts: st
 
 def clap_score(audio_mono: np.ndarray, sr: int, prompt: str, model, processor, device: str) -> float:
     return clap_score_batch([audio_mono], sr, prompt, model, processor, device)[0]
+
 # -------------------------------
 # Plugin renderers
 # -------------------------------
@@ -168,32 +156,31 @@ def build_eq_chain(mode: str, low_cut=80.0, high_cut=14000.0, q=1.0, gains: Dict
     if gains is None:
         gains = default_gains.copy()
     else:
-        # 누락된 키는 기본값으로 채움
         for k, v in default_gains.items():
             if k not in gains:
                 gains[k] = v
 
     chain = []
-    # 1. 'pass-shelf' 같은 문자열을 '-' 기준으로 분리하여 low_mode와 high_mode를 결정합니다.
+    # 1. decide low_mode and high_mode by splitting the string 'pass-shelf' at '-'
     try:
         low_mode, high_mode = mode.split('-')
     except ValueError:
-        # 혹시 모를 에러에 대비해 기본값 설정
+        # Set default values in case of unexpected errors
         low_mode, high_mode = "pass", "pass"
 
-    # 2. low_mode에 따라 저역 필터를 추가합니다.
+    # 2. append highpassfilter according to low_mode
     if low_mode == "pass":
         chain.append(HighpassFilter(cutoff_frequency_hz=low_cut))
     elif low_mode == "shelf":
         chain.append(LowShelfFilter(cutoff_frequency_hz=low_cut, gain_db=gains['low_shelf'], q=q))
 
-    # 3. high_mode에 따라 고역 필터를 추가합니다.
+    # 3. append lowpassfilter according to high_mode
     if high_mode == "pass":
         chain.append(LowpassFilter(cutoff_frequency_hz=high_cut))
     elif high_mode == "shelf":
         chain.append(HighShelfFilter(cutoff_frequency_hz=high_cut, gain_db=gains['high_shelf'], q=q))
     
-    # 4. 3개의 피크 필터는 그대로 유지됩니다.
+    # 4. The three peak filters are kept as is
     chain.extend([
         PeakFilter(cutoff_frequency_hz=peak1_freq, gain_db=gains['peak1'], q=q),
         PeakFilter(cutoff_frequency_hz=peak2_freq, gain_db=gains['peak2'], q=q),
@@ -204,14 +191,14 @@ def build_eq_chain(mode: str, low_cut=80.0, high_cut=14000.0, q=1.0, gains: Dict
 # variant builder given params
 def render(audio, sr, config: Dict):
     order = [
-            "EQ",          # 불필요한 주파수 제거
-            "Distortion",  # 톤 캐릭터
-            "Bitcrush",    # lo-fi 질감
-            "PitchShift",  # 피치 변환
-            "Delay",       # 시간적 공간감
-            "Reverb"       # 최종 공간감
+            "EQ",           
+            "Distortion",  
+            "Bitcrush",    
+            "PitchShift",  
+            "Delay",       
+            "Reverb"       
         ]
-        # config를 order에 따라 정렬
+        # sort config
     config_sorted = sorted(config, key=lambda x: order.index(x["type"]) if x["type"] in order else 99)
     board = []
     for fx in config_sorted:
@@ -273,66 +260,11 @@ def binary_search_param(audio, sr, base_config, fx_name, param_name, lo, hi, mod
             else: search_lo = mid_point
     return best_val, best_score
 
-def batched_search_param(audio, sr, base_config, fx_name, param_name, lo, hi, model, processor, device, prompt, scale='linear', steps=3, batch_size=8):
-    """
-    Performs a batched search for the best parameter value.
-    In each step, it evaluates `batch_size` candidates simultaneously.
-    """
-    best_val_overall = lo
-    
-    # Get the initial score to compare against
-    initial_processed = render(audio, sr, base_config)
-    best_score_overall = clap_score(initial_processed, sr, prompt, model, processor, device)
 
-    current_lo, current_hi = lo, hi
-    
-    for _ in range(steps):
-        # 1. 현재 탐색 범위 내에서 `batch_size`개의 후보 값을 생성합니다.
-        if scale == 'log':
-            test_vals = np.logspace(np.log10(max(current_lo, 1e-6)), np.log10(max(current_hi, 1e-6)), batch_size)
-        else:
-            test_vals = np.linspace(current_lo, current_hi, batch_size)
-            
-        # 2. 각 후보 값에 대한 오디오 배치를 생성합니다.
-        audio_batch = []
-        configs_batch = []
-        for val in test_vals:
-            config = [dict(f, **{'gains': f['gains'].copy()}) if 'gains' in f else dict(f) for f in base_config]
-            for f in config:
-                if f["type"] == fx_name:
-                    keys = param_name.split('.')
-                    if len(keys) == 2:
-                        if keys[0] not in f: f[keys[0]] = {}
-                        f[keys[0]][keys[1]] = val
-                    else:
-                        f[param_name] = val
-                    break
-            audio_batch.append(render(audio, sr, config))
-        
-        # 3. 오디오 배치를 "단 한 번에" 평가합니다.
-        scores_batch = clap_score_batch(audio_batch, sr, prompt, model, processor, device)
-        
-        # 4. 이번 배치에서 가장 좋았던 값과 점수를 찾습니다.
-        best_idx_in_batch = np.argmax(scores_batch)
-        best_score_in_batch = scores_batch[best_idx_in_batch]
-        best_val_in_batch = test_vals[best_idx_in_batch]
-        
-        # 5. 전체 최고 기록을 업데이트합니다.
-        if best_score_in_batch > best_score_overall:
-            best_score_overall = best_score_in_batch
-            best_val_overall = best_val_in_batch
-        
-        # 6. 다음 스텝을 위해, 이번 배치에서 가장 좋았던 값 주변으로 탐색 범위를 좁힙니다.
-        width = (current_hi - current_lo) * 0.4 # 범위를 40%로 줄여서 집중
-        current_lo = max(lo, best_val_in_batch - width / 2)
-        current_hi = min(hi, best_val_in_batch + width / 2)
-
-    return best_val_overall, best_score_overall
-
-# ==============================================================================
-# Refinement Worker Function (for Parallel Processing)
-# ==============================================================================
-def refine_candidate(args_dict):
+# -------------------------------
+# Refinement Worker Function
+# -------------------------------
+def refine_candidate_binary(args_dict):
     """Encapsulated refinement logic for a single candidate to be run in a separate process."""
     # Unpack all arguments
     rank = args_dict['rank']
@@ -419,7 +351,7 @@ def refine_candidate_bayesian(args_dict):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model, processor = get_clap_model(model_name, device)
 
-    # 1. 탐색 공간(Search Space) 정의
+    # 1. Define the search space
     search_space = []
     param_names = []
     
@@ -427,7 +359,6 @@ def refine_candidate_bayesian(args_dict):
         fx_type = fx["type"]
         if fx_type not in PARAM_RANGES: continue
         
-        # EQ가 아닐 경우에만 'activation' 파라미터를 추가
         if fx_type != "EQ":
             search_space.append(Real(0.0, 1.0, name=f"{fx_type}__activation"))
             param_names.append(f"{fx_type}__activation")
@@ -441,9 +372,8 @@ def refine_candidate_bayesian(args_dict):
                 search_space.append(Real(p_info['lo'], p_info['hi'], prior='log-uniform', name=full_param_name))
             else:
                 search_space.append(Real(p_info['lo'], p_info['hi'], name=full_param_name))
-
-    # 2. 목적 함수(Objective Function) 정의
-    #    이 함수는 skopt가 주는 파라미터로 오디오를 처리하고 점수를 반환합니다.
+    # 2. Define the objective function
+    #    This function processes the audio with parameters provided by skopt and returns the score.
     @use_named_args(search_space)
     def vanilla_objective_function(**params):
         temp_config = [p.copy() for p in initial_config]
@@ -452,11 +382,11 @@ def refine_candidate_bayesian(args_dict):
         for fx in temp_config:
             fx_type = fx['type']
             
-            # EQ는 항상 활성화
+            # always activate EQ
             is_active = (fx_type == "EQ") or (params.get(f"{fx_type}__activation", 0.0) > 0.5)
 
             if is_active:
-                # 활성화된 이펙터의 파라미터 값 업데이트
+                # Update parameters of activated effects
                 for p_name, p_value in params.items():
                     p_fx_type, param_key = p_name.split('__')
                     if p_fx_type == fx_type and param_key != 'activation':
@@ -481,12 +411,12 @@ def refine_candidate_bayesian(args_dict):
 
         for fx in temp_config:
             fx_type = fx['type']
-            
-            # EQ는 항상 활성화
+
+            # always activate EQ
             is_active = (fx_type == "EQ") or (params.get(f"{fx_type}__activation", 0.0) > 0.5)
 
             if is_active:
-                # 활성화된 이펙터의 파라미터 값 업데이트
+                # Update parameters of activated effects
                 for p_name, p_value in params.items():
                     p_fx_type, param_key = p_name.split('__')
                     if p_fx_type == fx_type and param_key != 'activation':
@@ -499,14 +429,13 @@ def refine_candidate_bayesian(args_dict):
                 active_config.append(fx)
         
         processed_audio = render(audio, sr, active_config)
-        
-        # 긍정 프롬프트와 부정 프롬프트를 모두 사용하여 점수 계산
+
+        # Use both positive and negative prompts to calculate scores
         positive_prompt = prompt # e.g., "A clear vocal with a subtle club room ambience"
         negative_prompt = "A harsh, distorted, muddy, unclear, oversaturated, unpleasant sound"
-        
-        # 두 개의 프롬프트에 대한 점수를 배치로 한 번에 계산
+
+        # Calculate scores for both prompts in a single batch
         prompts = [positive_prompt, negative_prompt]
-        # 오디오는 동일하므로 리스트에 두 번 넣어줌
         audio_batch = [processed_audio, processed_audio]
         
         scores = clap_score_batch_negative(audio_batch, sr, prompts, model, processor, device)
@@ -514,20 +443,19 @@ def refine_candidate_bayesian(args_dict):
         positive_score = scores[0]
         negative_score = scores[1]
         
-        # 최종 점수 = 긍정 점수 - 부정 점수
         final_score = positive_score - negative_score
         
         params_tuple = tuple(sorted(params.items()))
         scores_history[params_tuple] = positive_score
-        
-        # skopt는 최소화를 하므로, 최종 점수에 -1을 곱해 반환
+
+        # skopt minimizes the objective function, so we return -1 times the final score
         return -1.0 * final_score
     
     pbar = tqdm(total=n_calls, desc="Bayesian Optimization Progress", unit="iteration")
     def pbar_callback(res):
         pbar.update(1)
     early_stopper = EarlyStopper(delta=0.001, n_best=30)
-    # 3. 베이지안 최적화 실행
+    # 3. Run bayesian optimization
     objective_function = objective_function_negative if use_negative else vanilla_objective_function
     result = gp_minimize(objective_function, 
                          search_space, 
@@ -539,7 +467,7 @@ def refine_candidate_bayesian(args_dict):
                          callback=[pbar_callback, early_stopper]
                         )
     pbar.close()
-    # 4. 탐색 기록에서 Top-N 결과 추출
+    # 4. Extract Top-N results from the search history
     all_results = sorted(zip(result.func_vals, result.x_iters), key=lambda x: x[0])
     top_n_results = all_results[:top_n]
     final_presets = []
@@ -549,7 +477,7 @@ def refine_candidate_bayesian(args_dict):
         best_params = dict(zip(param_names, params_list))
         final_config = []
         params_tuple = tuple(sorted(best_params.items()))
-        benchmark_clap_score = scores_history.get(params_tuple, 0.0) # 만약의 경우를 대비해 기본값 0.0
+        benchmark_clap_score = scores_history.get(params_tuple, 0.0)
 
         for fx in initial_config:
             fx_type = fx['type']
@@ -575,23 +503,22 @@ def refine_candidate_bayesian(args_dict):
             "plugins": final_config
         })
         
-        # --- 5. Benchmark CLAP Score 기준으로 재정렬 및 파일 저장 ---
-        # benchmark_clap_score가 높은 순으로 리스트를 다시 정렬합니다.
+        # 5. Re-sort presets by benchmark CLAP score and save audio files
         final_presets = sorted(presets_to_sort, key=lambda x: x['benchmark_clap_score'], reverse=True)
 
         for rank, preset in enumerate(final_presets):
-            # 렌더링은 저장 직전에 한 번만 수행
+            # Render audio only once before saving
             final_audio = render(audio, sr, preset['plugins'])
             
-            # 재정렬된 순서에 따라 파일 이름 결정
+            # Determine file name based on sorted rank
             if rank == 0:
                 filename = "best.wav"
             else:
                 filename = f"rank_{rank + 1}.wav"
-                
+            
             save_audio(os.path.join(outdir, filename), final_audio, sr)
             
-            # 최종 순위를 딕셔너리에 추가
+            # Add final rank to the dictionary
             preset['rank'] = rank + 1
     return final_presets
 
@@ -645,7 +572,7 @@ def main():
     print(f"Using device: {device}")
     audio, sr = load_audio_mono(args.audio)
 
-    # 원본 오디오 저장
+    # save original audio
     save_audio(os.path.join(outdir, "original.wav"), audio, sr)
 
     start_time = time.time()
@@ -660,11 +587,8 @@ def main():
         {"type": "Bitcrush", "bit_depth": 0},
     ]
 
-    # --- Step 2: 단일 후보군에 대해 베이지안 최적화 실행 ---
-    # 병렬 처리가 필요 없으므로 ProcessPoolExecutor 제거
     print(f"\n--- Starting Bayesian Optimization for all parameters ---")
     
-    # refine_candidate 함수에 필요한 모든 인자를 넘겨줍니다.
     args_dict = {
         'initial_config': initial_config,
         'audio': audio, 'sr': sr, 'PARAM_RANGES': PARAM_RANGES,
@@ -674,7 +598,6 @@ def main():
 
     final_result = refine_candidate_bayesian(args_dict)
 
-    # --- Step 3: Save final presets ---
     elapsed = time.time() - start_time
     print(f"\nRefinement finished. Total search time: {elapsed:.2f} seconds")
     
