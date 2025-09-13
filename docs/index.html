@@ -8,7 +8,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FxSearcher: Algorithm based CLAP-supervised FX searching agent</title>
     <style>
-        /* 기본 스타일 */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
@@ -16,9 +15,7 @@
             background-color: #f5f5f7;
             color: #1d1d1f;
         }
-        /* 메인 컨테이너 */
         .container {
-            /* max-width를 1000px로 늘려 표가 더 보기 좋게 만듭니다. */
             max-width: 1000px; 
             margin: 40px auto;
             padding: 20px 40px;
@@ -26,7 +23,6 @@
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-        /* 제목 */
         h1, h2 {
             border-bottom: 1px solid #e5e5e5;
             padding-bottom: 10px;
@@ -43,11 +39,9 @@
             line-height: 1.6;
             text-align: justify;
         }
-        /* 각 예시 섹션 */
         .example {
             margin-bottom: 40px;
         }
-        /* 링크 스타일 */
         a {
             color: #0071e3;
             text-decoration: none;
@@ -61,7 +55,6 @@
             border-collapse: collapse;
             margin-top: 30px;
             font-size: 0.9em;
-            /* 테이블 레이아웃을 고정하여 너비 설정이 잘 적용되도록 함 */
             table-layout: fixed; 
         }
         th, td {
@@ -69,7 +62,6 @@
             padding: 12px;
             text-align: left;
             vertical-align: middle;
-            /* 너비를 초과하는 텍스트는 자동으로 줄바꿈 처리 */
             word-wrap: break-word;
         }
         thead {
@@ -82,23 +74,20 @@
             background-color: #f5f5f7;
         }
 
-        /* 각 열(Column)의 너비를 지정합니다. */
-        th:nth-child(1), td:nth-child(1) { width: 25%; }  /* 1번째 열: Target Prompt */
-        th:nth-child(2), td:nth-child(2) { width: 15%; }  /* 2번째 열: FX Chain */
-        th:nth-child(3), td:nth-child(3) { width: 10%; }  /* 3번째 열: Audio Type */
-        /* 나머지 3개 오디오 열은 남은 공간을 나눠 가집니다. */
+        th:nth-child(1), td:nth-child(1) { width: 25%; }  /* Target Prompt */
+        th:nth-child(2), td:nth-child(2) { width: 15%; }  /* FX Chain */
+        th:nth-child(3), td:nth-child(3) { width: 10%; }  /* Audio Type */
         
-        /* 모든 오디오 플레이어에 일관된 스타일 적용 */
         audio {
             width: 100%;
-            max-width: 100px; /* 최대 너비를 지정하여 너무 커지지 않게 함 */
+            max-width: 100px; 
             height: 40px;
         }
     </style>
     <script>
     window.MathJax = {
       tex: {
-        inlineMath: [['\\(', '\\)']] // 인라인 수식은 \(...\) 기호를 사용한다고 명시
+        inlineMath: [['\\(', '\\)']] 
       }
     };
     </script>
@@ -108,9 +97,9 @@
 
     <div class="container">
         <header>
-            <h1>Automatic Audio FX Search Results</h1>
+            <h1>Qualitative Results of FxSearcher</h1>
             <p>
-                This page demonstrates the results of an automatic audio FX parameter searching agent, Fxsearcher. The system takes a source audio file and a text prompt, then uses the CLAP model and Bayesian Optimization to find the optimal effects chain and parameters.
+                This page demonstrates the results of an gradient-free text-driven FX parameter searching agent, Fxsearcher. The system takes a source audio file and a target text prompt, then uses the CLAP model and Bayesian Optimization to find the optimal effects chain and parameters.
             </p>
         </header>
 
