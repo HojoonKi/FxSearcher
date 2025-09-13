@@ -10,19 +10,19 @@ Simply provide a source audio file and a prompt like *"Make this voice sound lik
 
 ## Features
 
-* **🎹 Universal FX Compatibility**
+* **Universal FX Compatibility**
     * Works with your existing library of **indifferentiable, commercial-grade audio plugins**. No need for special "differentiable" versions. FxSearcher gives you automated control over the professional tools you already use.
 
-* **🧠 Gradient-Free Intelligent Search**
+* **Gradient-Free Intelligent Search**
     * Employs **Bayesian Optimization** (`scikit-optimize`) to efficiently find optimal parameters without the constraints and limitations of gradient-based methods.
 
-* **🎯 Refined Audio Quality with Guiding Prompts**
+* **Refined Audio Quality with Guiding Prompts**
     * Utilizes a sophisticated scoring function with both a positive prompt (e.g., *"lo-fi radio"*) and a **Guiding Prompt** (e.g., *"clear, not harsh"*) to steer the search away from undesirable artifacts and towards perceptually high-quality results.
 
-* **🔗 Dynamic FX Chain Generation**
+* **Dynamic FX Chain Generation**
     * The optimizer intelligently activates or bypasses effects in a given chain, discovering the most effective combination for the target sound.
 
-* **📁 Exportable & Reproducible Presets**
+* **Exportable & Reproducible Presets**
     * Provides multiple high-scoring candidates (Top-N) as both processed audio files and **exact parameter presets**. These presets can be saved and loaded into your Digital Audio Workstation (DAW) for full reproducibility.
 
 -----
