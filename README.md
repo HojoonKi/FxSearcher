@@ -50,7 +50,7 @@ This file ensures you have the correct Python version and all dependencies.
       - pytorch
       - torchvision
       - torchaudio
-      - pytorch-cuda=11.8 # Or your CUDA version, e.g., 12.1
+      - pytorch-cuda=12.8 # Or your CUDA version, e.g., 12.1
       - pip:
         - transformers
         - pedalboard
@@ -109,7 +109,7 @@ Run the script from your terminal. All arguments are required unless they have a
 | `--model`         | The CLAP model to use from the Hugging Face Hub. (Default: `laion/clap-htsat-unfused`)                   |
 | `--top_n`         | The number of top-ranking results to save. (Default: `5`)                                                |
 | `--n_calls`       | The total number of iterations for the Bayesian optimization search. (Default: `100`)                      |
-| `--use_negative`  | A flag to enable the negative prompt objective function for higher quality results. (Enabled by default) |
+| `--use_guide`  | A flag to enable the guiding prompt objective function for higher quality results. (Enabled by default) |
 
 ### Example
 
