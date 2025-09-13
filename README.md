@@ -1,16 +1,29 @@
-# Automatic Audio FX Chain Generation using CLAP
+# FxSearcher: Gradient-free Text-driven Audio Transformation
 
-This project provides a Python script that automatically discovers and tunes a chain of audio effects to make a source audio file match a given text prompt. It leverages the Contrastive Language-Audio Pre-training (CLAP) model for semantic understanding and uses Bayesian Optimization for intelligent, efficient parameter searching.
+***Control any audio effect—from commercial VSTs to custom plugins—using only natural language.***
 
-The system can determine which effects to use (e.g., Reverb, Distortion, EQ), in what combination, and with what specific parameters, to best match a creative goal like "a low fidelity radio effect on a voice."
+FxSearcher is a powerful Python framework for text-driven audio transformation. Unlike traditional deep learning methods that are limited to simple, differentiable effects, FxSearcher is **gradient-free**. This unique approach allows it to control **any audio FX plugin (e.g., VST, AU)**, including the complex, commercial-grade tools previously inaccessible to automated control.
+
+By leveraging the semantic understanding of the CLAP model and the efficiency of Bayesian Optimization, FxSearcher intelligently discovers the optimal chain of effects and parameter settings to match your creative vision, described in plain text.
+
+Simply provide a source audio file and a prompt like *"Make this voice sound like it's coming from an old, lo-fi radio."* FxSearcher will then search through your available plugins, determine the best combination, and tune their parameters to achieve the desired effect.
 
 ## Features
 
-  - **Text-to-Audio-FX:** Generates complex audio effect presets from simple text descriptions.
-  - **Intelligent Search:** Uses Bayesian Optimization (`scikit-optimize`) to efficiently find optimal parameters without brute-forcing all possibilities.
-  - **Dynamic FX Activation:** The optimizer intelligently decides which effects to turn ON or OFF for the best result.
-  - **High-Quality Objective:** Utilizes a "negative prompt" strategy to refine the evaluation criteria, guiding the search away from harsh or undesirable sounds and toward more musically plausible results.
-  - **Multiple Candidates:** The search process identifies and saves multiple high-scoring presets (Top-N), giving you a variety of creative options.
+* **🎹 Universal FX Compatibility**
+    * Works with your existing library of **indifferentiable, commercial-grade audio plugins**. No need for special "differentiable" versions. FxSearcher gives you automated control over the professional tools you already use.
+
+* **🧠 Gradient-Free Intelligent Search**
+    * Employs **Bayesian Optimization** (`scikit-optimize`) to efficiently find optimal parameters without the constraints and limitations of gradient-based methods.
+
+* **🎯 Refined Audio Quality with Guiding Prompts**
+    * Utilizes a sophisticated scoring function with both a positive prompt (e.g., *"lo-fi radio"*) and a **Guiding Prompt** (e.g., *"clear, not harsh"*) to steer the search away from undesirable artifacts and towards perceptually high-quality results.
+
+* **🔗 Dynamic FX Chain Generation**
+    * The optimizer intelligently activates or bypasses effects in a given chain, discovering the most effective combination for the target sound.
+
+* **📁 Exportable & Reproducible Presets**
+    * Provides multiple high-scoring candidates (Top-N) as both processed audio files and **exact parameter presets**. These presets can be saved and loaded into your Digital Audio Workstation (DAW) for full reproducibility.
 
 -----
 
